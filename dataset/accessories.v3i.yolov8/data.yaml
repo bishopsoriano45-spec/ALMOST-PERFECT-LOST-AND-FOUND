@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 5
+names: ['bracelet', 'long-pants', 'shirt', 'sock', 'wallet']
+
+roboflow:
+  workspace: pheemaphon
+  project: accessories-tgcrr
+  version: 3
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/pheemaphon/accessories-tgcrr/dataset/3

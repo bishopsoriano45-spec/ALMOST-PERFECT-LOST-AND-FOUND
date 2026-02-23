@@ -52,12 +52,13 @@ test-results/
 ai_service/models/
 
 # Datasets and Training runs
-dataset/
-runs/
+# dataset/
+# runs/
 
 # User Uploads
-uploads/
-server/uploads/
+# uploads/
+# server/uploads/
+
 
 
 # lock files should be tracked

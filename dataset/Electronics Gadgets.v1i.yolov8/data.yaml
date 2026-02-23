@@ -1,0 +1,13 @@
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 11
+names: ['calculator', 'earphone', 'joy stick', 'laptop_computer', 'mouse', 'person', 'printer', 'remote', 'smart phone', 'tablet', 'watch']
+
+roboflow:
+  workspace: riss1
+  project: electronics-gadgets
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/riss1/electronics-gadgets/dataset/1

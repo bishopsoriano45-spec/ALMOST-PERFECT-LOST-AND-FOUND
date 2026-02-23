@@ -1,0 +1,13 @@
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 10
+names: ['AirPods', 'Airpods_Units', 'Buds', 'Buds_Units', 'Tablet_PC', 'credit_card', 'laptop', 'pen', 'phone', 'wallet']
+
+roboflow:
+  workspace: lostitem
+  project: item-8frmn
+  version: 8
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/lostitem/item-8frmn/dataset/8
