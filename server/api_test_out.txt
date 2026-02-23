@@ -1,0 +1,3 @@
+Sending request to Live Node API...
+API Error (500): 500
+Response Data: {"success":false,"error":"Internal Server Error"}

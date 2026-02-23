@@ -1,0 +1,119 @@
+@startuml
+interface IItemService {
+    +createItem(itemData: CreateItemRequest): Item
+    +getItem(itemId: string): Item
+    +updateItem(itemId: string, updates: UpdateItemRequest): Item
+    +searchItems(query: SearchQuery): Item[]
+    +deleteItem(itemId: string): boolean
+}
+
+interface IAIService {
+    +classifyImage(imageData: bytes): ClassificationResult
+    +extractEmbedding(imageData: bytes): EmbeddingVector
+    +findSimilarItems(embedding: EmbeddingVector, threshold: float): SimilarItem[]
+    +provideFeedback(itemId: string, feedback: UserFeedback): void
+    +triggerRetraining(): RetrainingJob
+}
+
+interface INotificationService {
+    +sendNotification(userId: string, notification: Notification): void
+    +createAlert(matchData: MatchAlert): void
+    +getUserPreferences(userId: string): NotificationPreferences
+    +updatePreferences(userId: string, prefs: NotificationPreferences): void
+    +getNotificationHistory(userId: string): Notification[]
+}
+
+interface IAutoLearningService {
+    +addTrainingData(imageData: bytes, label: string, feedback: UserFeedback): void
+    +checkRetrainingTrigger(): boolean
+    +executeRetraining(): RetrainingResult
+    +updateEmbeddings(): void
+    +getModelMetrics(): ModelMetrics
+}
+
+class Item {
+    +id: string
+    +title: string
+    +description: string
+    +category: string
+    +type: ItemType
+    +images: string[]
+    +location: Location
+    +dateReported: datetime
+    +status: ItemStatus
+    +userId: string
+    +aiClassification: ClassificationResult
+    +embedding: EmbeddingVector
+    +tags: string[]
+    +contactInfo: ContactInfo
+}
+
+class ClassificationResult {
+    +category: string
+    +confidence: float
+    +predictions: CategoryPrediction[]
+    +modelVersion: string
+    +timestamp: datetime
+}
+
+class EmbeddingVector {
+    +vector: float[]
+    +dimension: int
+    +modelVersion: string
+    +extractionMethod: string
+}
+
+class UserFeedback {
+    +itemId: string
+    +userId: string
+    +feedbackType: FeedbackType
+    +isCorrect: boolean
+    +correctedLabel: string
+    +confidence: int
+    +timestamp: datetime
+}
+
+class Notification {
+    +id: string
+    +userId: string
+    +type: NotificationType
+    +title: string
+    +message: string
+    +data: NotificationData
+    +isRead: boolean
+    +createdAt: datetime
+    +channels: NotificationChannel[]
+}
+
+class MatchAlert {
+    +lostItemId: string
+    +foundItemId: string
+    +similarityScore: float
+    +matchingFeatures: string[]
+    +confidence: float
+    +timestamp: datetime
+}
+
+class RetrainingJob {
+    +jobId: string
+    +status: JobStatus
+    +startTime: datetime
+    +endTime: datetime
+    +datasetSize: int
+    +modelMetrics: ModelMetrics
+    +errorLog: string
+}
+
+IItemService ..> Item
+IAIService ..> ClassificationResult
+IAIService ..> EmbeddingVector
+IAIService ..> UserFeedback
+INotificationService ..> Notification
+INotificationService ..> MatchAlert
+IAutoLearningService ..> RetrainingJob
+IAutoLearningService ..> UserFeedback
+
+Item --> ClassificationResult
+Item --> EmbeddingVector
+Notification --> MatchAlert
+@enduml

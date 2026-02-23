@@ -1,0 +1,79 @@
+@startuml
+!define RECTANGLE class
+
+package "Frontend Layer" {
+    [React Web App] as WebApp
+    [WebSocket Client] as WSClient
+    [Service Worker] as SW
+}
+
+package "API Gateway" {
+    [FastAPI Gateway] as Gateway
+    [Authentication] as Auth
+    [Rate Limiting] as RateLimit
+}
+
+package "Core Services" {
+    [Item Management Service] as ItemService
+    [AI Classification Service] as AIService
+    [Notification Service] as NotificationService
+    [User Management Service] as UserService
+}
+
+package "ML Pipeline" {
+    [YOLOv8m Model] as YOLO
+    [Embedding Extractor] as Embedder
+    [Similarity Matcher] as Matcher
+    [Auto-Learning Engine] as AutoLearner
+}
+
+package "Background Jobs" {
+    [Celery Workers] as Workers
+    [Model Retraining Job] as RetrainJob
+    [Similarity Matching Job] as MatchJob
+    [Notification Delivery Job] as NotifyJob
+}
+
+package "Data Layer" {
+    [PostgreSQL] as DB
+    [Qdrant Vector DB] as VectorDB
+    [Redis Cache] as Cache
+    [MinIO Storage] as Storage
+}
+
+package "External Services" {
+    [SMTP Server] as SMTP
+    [Push Notification Service] as PushService
+}
+
+WebApp --> Gateway
+WSClient --> Gateway
+Gateway --> Auth
+Gateway --> RateLimit
+Gateway --> ItemService
+Gateway --> AIService
+Gateway --> NotificationService
+Gateway --> UserService
+
+AIService --> YOLO
+AIService --> Embedder
+AIService --> Matcher
+AIService --> AutoLearner
+
+ItemService --> DB
+ItemService --> Storage
+AIService --> VectorDB
+NotificationService --> Cache
+
+Workers --> RetrainJob
+Workers --> MatchJob
+Workers --> NotifyJob
+
+RetrainJob --> YOLO
+MatchJob --> Matcher
+NotifyJob --> SMTP
+NotifyJob --> PushService
+
+AutoLearner --> DB
+AutoLearner --> VectorDB
+@enduml

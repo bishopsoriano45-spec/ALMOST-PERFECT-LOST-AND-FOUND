@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+ultralytics
+numpy
+opencv-python
+faiss-cpu
+python-multipart
+requests
+google-genai
+python-dotenv
+psycopg2-binary

@@ -1,0 +1,178 @@
+@startuml
+entity "users" as users {
+    * id : uuid <<PK>>
+    --
+    * email : varchar(255)
+    * password_hash : varchar(255)
+    * name : varchar(100)
+    * phone : varchar(20)
+    * created_at : timestamp
+    * updated_at : timestamp
+    * is_active : boolean
+    * email_verified : boolean
+}
+
+entity "items" as items {
+    * id : uuid <<PK>>
+    --
+    * user_id : uuid <<FK>>
+    * title : varchar(200)
+    * description : text
+    * category : varchar(50)
+    * type : enum('lost', 'found')
+    * status : enum('active', 'matched', 'resolved', 'expired')
+    * location_lat : decimal(10,8)
+    * location_lng : decimal(11,8)
+    * location_name : varchar(200)
+    * date_reported : timestamp
+    * date_lost_found : timestamp
+    * created_at : timestamp
+    * updated_at : timestamp
+    * contact_phone : varchar(20)
+    * contact_email : varchar(255)
+    * reward_amount : decimal(10,2)
+}
+
+entity "item_images" as item_images {
+    * id : uuid <<PK>>
+    --
+    * item_id : uuid <<FK>>
+    * image_url : varchar(500)
+    * image_path : varchar(500)
+    * is_primary : boolean
+    * file_size : bigint
+    * mime_type : varchar(50)
+    * created_at : timestamp
+}
+
+entity "ai_classifications" as ai_classifications {
+    * id : uuid <<PK>>
+    --
+    * item_id : uuid <<FK>>
+    * model_version : varchar(50)
+    * predicted_category : varchar(50)
+    * confidence_score : decimal(5,4)
+    * predictions_json : jsonb
+    * embedding_vector : vector(512)
+    * processing_time_ms : integer
+    * created_at : timestamp
+}
+
+entity "user_feedback" as user_feedback {
+    * id : uuid <<PK>>
+    --
+    * item_id : uuid <<FK>>
+    * user_id : uuid <<FK>>
+    * classification_id : uuid <<FK>>
+    * feedback_type : enum('classification', 'similarity', 'match')
+    * is_correct : boolean
+    * corrected_label : varchar(50)
+    * confidence_rating : integer
+    * feedback_text : text
+    * created_at : timestamp
+}
+
+entity "training_dataset" as training_dataset {
+    * id : uuid <<PK>>
+    --
+    * item_id : uuid <<FK>>
+    * image_path : varchar(500)
+    * verified_label : varchar(50)
+    * confidence_score : decimal(5,4)
+    * user_verified : boolean
+    * feedback_count : integer
+    * is_active : boolean
+    * added_at : timestamp
+    * last_used_at : timestamp
+}
+
+entity "model_versions" as model_versions {
+    * id : uuid <<PK>>
+    --
+    * version : varchar(50)
+    * model_path : varchar(500)
+    * training_data_size : integer
+    * accuracy_score : decimal(5,4)
+    * precision_score : decimal(5,4)
+    * recall_score : decimal(5,4)
+    * f1_score : decimal(5,4)
+    * training_duration_minutes : integer
+    * is_active : boolean
+    * created_at : timestamp
+}
+
+entity "similarity_matches" as similarity_matches {
+    * id : uuid <<PK>>
+    --
+    * lost_item_id : uuid <<FK>>
+    * found_item_id : uuid <<FK>>
+    * similarity_score : decimal(5,4)
+    * matching_features : jsonb
+    * ai_confidence : decimal(5,4)
+    * user_confirmed : boolean
+    * status : enum('pending', 'confirmed', 'rejected', 'expired')
+    * created_at : timestamp
+    * confirmed_at : timestamp
+}
+
+entity "notifications" as notifications {
+    * id : uuid <<PK>>
+    --
+    * user_id : uuid <<FK>>
+    * match_id : uuid <<FK>>
+    * type : enum('match_found', 'item_claimed', 'system_update')
+    * title : varchar(200)
+    * message : text
+    * data : jsonb
+    * channels : jsonb
+    * is_read : boolean
+    * sent_at : timestamp
+    * read_at : timestamp
+    * created_at : timestamp
+}
+
+entity "notification_preferences" as notification_preferences {
+    * id : uuid <<PK>>
+    --
+    * user_id : uuid <<FK>>
+    * email_enabled : boolean
+    * push_enabled : boolean
+    * sms_enabled : boolean
+    * match_threshold : decimal(3,2)
+    * frequency : enum('immediate', 'hourly', 'daily')
+    * quiet_hours_start : time
+    * quiet_hours_end : time
+    * created_at : timestamp
+    * updated_at : timestamp
+}
+
+entity "retraining_jobs" as retraining_jobs {
+    * id : uuid <<PK>>
+    --
+    * job_id : varchar(100)
+    * status : enum('pending', 'running', 'completed', 'failed')
+    * trigger_type : enum('scheduled', 'threshold', 'manual')
+    * dataset_size : integer
+    * new_samples_count : integer
+    * start_time : timestamp
+    * end_time : timestamp
+    * model_version_id : uuid <<FK>>
+    * error_message : text
+    * metrics : jsonb
+    * created_at : timestamp
+}
+
+users ||--o{ items : "items.user_id -> users.id"
+items ||--o{ item_images : "item_images.item_id -> items.id"
+items ||--o{ ai_classifications : "ai_classifications.item_id -> items.id"
+items ||--o{ user_feedback : "user_feedback.item_id -> items.id"
+users ||--o{ user_feedback : "user_feedback.user_id -> users.id"
+ai_classifications ||--o{ user_feedback : "user_feedback.classification_id -> ai_classifications.id"
+items ||--o{ training_dataset : "training_dataset.item_id -> items.id"
+items ||--o{ similarity_matches : "similarity_matches.lost_item_id -> items.id"
+items ||--o{ similarity_matches : "similarity_matches.found_item_id -> items.id"
+users ||--o{ notifications : "notifications.user_id -> users.id"
+similarity_matches ||--o{ notifications : "notifications.match_id -> similarity_matches.id"
+users ||--o{ notification_preferences : "notification_preferences.user_id -> users.id"
+model_versions ||--o{ retraining_jobs : "retraining_jobs.model_version_id -> model_versions.id"
+@enduml

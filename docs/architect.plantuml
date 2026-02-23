@@ -1,0 +1,119 @@
+@startuml Enhanced Lost & Found AI System Architecture
+
+!define RECTANGLE class
+
+package "Frontend Layer" {
+    [React UI] as UI
+    [Feedback Components] as FB
+    [Admin Dashboard] as ADMIN
+    [Image Upload] as UPLOAD
+}
+
+package "API Gateway Layer" {
+    [Authentication Service] as AUTH
+    [Rate Limiting] as RATE
+    [Load Balancer] as LB
+}
+
+package "Backend Services" {
+    [Item Management API] as ITEM_API
+    [Auto-Learning API] as LEARN_API
+    [Feedback Collection API] as FEEDBACK_API
+    [Model Management API] as MODEL_API
+    [Similarity Search API] as SEARCH_API
+}
+
+package "AI/ML Layer" {
+    [YOLOv8m-cls Service] as YOLO
+    [Embedding Generator] as EMBED
+    [Auto-Learning Engine] as AUTO_LEARN
+    [Model Optimizer] as OPTIMIZER
+    [Incremental Trainer] as TRAINER
+}
+
+package "Data Storage Layer" {
+    database "PostgreSQL\n(Metadata)" as POSTGRES {
+        [Items Table] as ITEMS
+        [Users Table] as USERS
+        [Feedback Table] as FEEDBACK_DB
+        [Training Metadata] as TRAINING_META
+        [Model Versions] as MODEL_VER
+    }
+    
+    database "FAISS/Milvus\n(Vector DB)" as VECTOR_DB {
+        [Image Embeddings] as EMBEDDINGS
+        [Similarity Index] as INDEX
+    }
+    
+    storage "File Storage\n(S3/MinIO)" as FILES {
+        [Original Images] as ORIG_IMG
+        [Training Dataset] as TRAIN_DATA
+        [Model Weights] as WEIGHTS
+    }
+}
+
+package "Background Services" {
+    [APScheduler] as SCHEDULER
+    [Retraining Pipeline] as RETRAIN
+    [Index Rebuilder] as REBUILD
+    [Data Validator] as VALIDATOR
+    [Monitoring Service] as MONITOR
+}
+
+package "External Services" {
+    [Notification Service] as NOTIFY
+    [Analytics Platform] as ANALYTICS
+    [Model Registry] as REGISTRY
+}
+
+' Frontend connections
+UI --> AUTH : Authentication
+UI --> ITEM_API : CRUD Operations
+UI --> SEARCH_API : Similarity Search
+FB --> FEEDBACK_API : User Feedback
+ADMIN --> MODEL_API : Model Management
+UPLOAD --> YOLO : Image Classification
+
+' API Gateway connections
+AUTH --> LB
+RATE --> LB
+LB --> ITEM_API
+LB --> LEARN_API
+LB --> FEEDBACK_API
+LB --> MODEL_API
+LB --> SEARCH_API
+
+' Backend to AI/ML connections
+ITEM_API --> YOLO : Classification
+SEARCH_API --> EMBED : Generate Embeddings
+SEARCH_API --> VECTOR_DB : Vector Search
+FEEDBACK_API --> AUTO_LEARN : Feedback Processing
+MODEL_API --> OPTIMIZER : Model Updates
+
+' AI/ML internal connections
+YOLO --> EMBED : Feature Extraction
+AUTO_LEARN --> TRAINER : Trigger Training
+TRAINER --> OPTIMIZER : Model Optimization
+OPTIMIZER --> YOLO : Update Weights
+
+' Data connections
+ITEM_API --> POSTGRES
+FEEDBACK_API --> POSTGRES
+MODEL_API --> POSTGRES
+EMBED --> VECTOR_DB
+YOLO --> FILES
+TRAINER --> FILES
+
+' Background services
+SCHEDULER --> RETRAIN : Scheduled Training
+RETRAIN --> TRAINER : Execute Training
+RETRAIN --> REBUILD : Update Index
+VALIDATOR --> POSTGRES : Data Quality
+MONITOR --> ANALYTICS : Performance Metrics
+
+' External integrations
+RETRAIN --> REGISTRY : Model Versioning
+MONITOR --> NOTIFY : Alerts
+ANALYTICS --> ADMIN : Reporting
+
+@enduml

@@ -1,0 +1,213 @@
+@startuml Enhanced Lost & Found AI System - Class Diagram
+
+interface IYOLOService {
+    +classify_image(image_data: bytes, confidence_threshold: float = 0.85): ClassificationResult
+    +extract_features(image_data: bytes): np.ndarray
+    +get_model_info(): ModelInfo
+    +update_model(model_path: str): bool
+}
+
+interface IAutoLearningEngine {
+    +process_feedback(feedback: UserFeedback): void
+    +check_retraining_triggers(): bool
+    +trigger_retraining(): RetrainingJob
+    +validate_training_data(): ValidationResult
+}
+
+interface IVectorDatabase {
+    +store_embedding(item_id: str, embedding: np.ndarray, metadata: dict): void
+    +search_similar(query_embedding: np.ndarray, top_k: int = 5): List[SimilarityMatch]
+    +rebuild_index(): void
+    +get_index_stats(): IndexStats
+}
+
+interface IFeedbackCollector {
+    +collect_classification_feedback(item_id: str, user_correction: str, confidence: float): void
+    +collect_match_feedback(item_id: str, matched_id: str, is_correct: bool): void
+    +get_pending_feedback(): List[UserFeedback]
+}
+
+class YOLOv8mService implements IYOLOService {
+    -model: YOLO
+    -device: str
+    -input_size: tuple
+    -class_names: List[str]
+    
+    +__init__(model_path: str, device: str = "cuda")
+    +classify_image(image_data: bytes, confidence_threshold: float = 0.85): ClassificationResult
+    +extract_features(image_data: bytes): np.ndarray
+    +preprocess_image(image: PIL.Image): torch.Tensor
+    +postprocess_results(results: torch.Tensor): ClassificationResult
+    +get_model_info(): ModelInfo
+    +update_model(model_path: str): bool
+    +normalize_embeddings(embeddings: np.ndarray): np.ndarray
+}
+
+class AutoLearningEngine implements IAutoLearningEngine {
+    -feedback_threshold: int
+    -confidence_threshold: float
+    -retraining_scheduler: APScheduler
+    -data_validator: DataValidator
+    -model_optimizer: ModelOptimizer
+    
+    +__init__(config: AutoLearningConfig)
+    +process_feedback(feedback: UserFeedback): void
+    +check_retraining_triggers(): bool
+    +trigger_retraining(): RetrainingJob
+    +validate_training_data(): ValidationResult
+    +prepare_training_dataset(): TrainingDataset
+    +execute_incremental_training(): TrainingResult
+    +update_model_weights(): bool
+}
+
+class FAISSVectorDB implements IVectorDatabase {
+    -index: faiss.Index
+    -dimension: int
+    -index_type: str
+    -metadata_store: dict
+    
+    +__init__(dimension: int, index_type: str = "IVF")
+    +store_embedding(item_id: str, embedding: np.ndarray, metadata: dict): void
+    +search_similar(query_embedding: np.ndarray, top_k: int = 5): List[SimilarityMatch]
+    +rebuild_index(): void
+    +get_index_stats(): IndexStats
+    +normalize_vectors(vectors: np.ndarray): np.ndarray
+    +hierarchical_search(embedding: np.ndarray, predicted_class: str): List[SimilarityMatch]
+}
+
+class FeedbackCollector implements IFeedbackCollector {
+    -db_connection: DatabaseConnection
+    -validation_rules: List[ValidationRule]
+    
+    +collect_classification_feedback(item_id: str, user_correction: str, confidence: float): void
+    +collect_match_feedback(item_id: str, matched_id: str, is_correct: bool): void
+    +validate_feedback(feedback: UserFeedback): bool
+    +get_pending_feedback(): List[UserFeedback]
+    +aggregate_feedback_stats(): FeedbackStats
+}
+
+class ModelOptimizer {
+    -learning_rate: float
+    -batch_size: int
+    -epochs: int
+    -freeze_layers: List[str]
+    
+    +__init__(config: OptimizerConfig)
+    +setup_incremental_learning(base_model: torch.nn.Module): torch.nn.Module
+    +fine_tune_model(model: torch.nn.Module, dataset: TrainingDataset): TrainingResult
+    +validate_model_performance(model: torch.nn.Module, test_data: TestDataset): ValidationMetrics
+    +save_model_checkpoint(model: torch.nn.Module, version: str): str
+}
+
+class RetrainingScheduler {
+    -scheduler: APScheduler
+    -trigger_conditions: List[TriggerCondition]
+    -job_queue: Queue
+    
+    +__init__(config: SchedulerConfig)
+    +schedule_periodic_training(interval: str): void
+    +check_trigger_conditions(): bool
+    +execute_retraining_job(job: RetrainingJob): JobResult
+    +monitor_training_progress(job_id: str): TrainingProgress
+}
+
+class DataValidator {
+    -quality_threshold: float
+    -duplicate_detector: DuplicateDetector
+    -adversarial_filter: AdversarialFilter
+    
+    +validate_image_quality(image_data: bytes): QualityScore
+    +detect_duplicates(new_samples: List[TrainingSample]): List[str]
+    +filter_adversarial_inputs(feedback: UserFeedback): bool
+    +consensus_validation(conflicting_feedback: List[UserFeedback]): UserFeedback
+}
+
+' Data Models
+class Item {
+    +id: str
+    +title: str
+    +description: str
+    +category: str
+    +status: ItemStatus
+    +image_urls: List[str]
+    +location: Location
+    +date_reported: datetime
+    +user_id: str
+    +embedding_id: str
+    +ai_confidence: float
+    +verified: bool
+}
+
+class UserFeedback {
+    +id: str
+    +item_id: str
+    +user_id: str
+    +feedback_type: FeedbackType
+    +original_classification: str
+    +corrected_classification: str
+    +confidence_score: float
+    +is_verified: bool
+    +timestamp: datetime
+    +metadata: dict
+}
+
+class TrainingSample {
+    +id: str
+    +image_path: str
+    +label: str
+    +confidence: float
+    +source: DataSource
+    +quality_score: float
+    +verified: bool
+    +created_at: datetime
+    +metadata: dict
+}
+
+class ClassificationResult {
+    +predicted_class: str
+    +confidence: float
+    +bounding_boxes: List[BoundingBox]
+    +features: np.ndarray
+    +processing_time: float
+    +model_version: str
+}
+
+class SimilarityMatch {
+    +item_id: str
+    +similarity_score: float
+    +metadata: dict
+    +distance: float
+    +rank: int
+}
+
+class RetrainingJob {
+    +job_id: str
+    +trigger_reason: str
+    +dataset_size: int
+    +start_time: datetime
+    +status: JobStatus
+    +progress: float
+    +estimated_completion: datetime
+    +result: TrainingResult
+}
+
+' Relationships
+YOLOv8mService --> ClassificationResult : creates
+AutoLearningEngine --> RetrainingJob : manages
+FAISSVectorDB --> SimilarityMatch : returns
+FeedbackCollector --> UserFeedback : processes
+ModelOptimizer --> TrainingResult : produces
+RetrainingScheduler --> RetrainingJob : schedules
+DataValidator --> TrainingSample : validates
+
+AutoLearningEngine --> ModelOptimizer : uses
+AutoLearningEngine --> RetrainingScheduler : uses
+AutoLearningEngine --> DataValidator : uses
+YOLOv8mService --> FAISSVectorDB : updates
+FeedbackCollector --> AutoLearningEngine : feeds
+
+Item --> UserFeedback : receives
+UserFeedback --> TrainingSample : becomes
+TrainingSample --> RetrainingJob : included_in
+
+@enduml

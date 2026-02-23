@@ -1,0 +1,61 @@
+@startuml
+state "Dashboard" as Dashboard {
+    [*] --> Dashboard
+    Dashboard : View statistics
+    Dashboard : Search items
+    Dashboard : Recent activity
+}
+
+state "Upload Item" as Upload {
+    Upload : Take/select photo
+    Upload : AI classification
+    Upload : Add details
+    Upload : Submit item
+}
+
+state "Item Detail" as Detail {
+    Detail : View full info
+    Detail : Similar items
+    Detail : Contact owner
+    Detail : Provide feedback
+}
+
+state "Notifications" as Notifications {
+    Notifications : View alerts
+    Notifications : Match confirmations
+    Notifications : Settings
+}
+
+state "My Items" as MyItems {
+    MyItems : Manage items
+    MyItems : View matches
+    MyItems : Update status
+}
+
+state "AI Feedback" as Feedback {
+    Feedback : Confirm classification
+    Feedback : Correct predictions
+    Feedback : Rate matches
+}
+
+Dashboard --> Upload : report item
+Dashboard --> Detail : view item
+Dashboard --> Notifications : check alerts
+Dashboard --> MyItems : manage items
+
+Upload --> Detail : after submit
+Upload --> Feedback : review AI results
+
+Detail --> Feedback : provide feedback
+Detail --> Notifications : enable alerts
+Detail --> Dashboard : back home
+
+Notifications --> Detail : view match
+Notifications --> Dashboard : back home
+
+MyItems --> Detail : view item
+MyItems --> Dashboard : back home
+
+Feedback --> Detail : after feedback
+Feedback --> Dashboard : continue browsing
+@enduml

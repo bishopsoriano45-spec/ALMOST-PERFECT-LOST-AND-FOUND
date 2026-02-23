@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+onnxruntime
+numpy
+Pillow
+opencv-python-headless
+faiss-cpu
+python-multipart
+requests
+google-genai
+python-dotenv
+psycopg2-binary

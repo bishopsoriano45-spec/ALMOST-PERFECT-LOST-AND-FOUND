@@ -1,0 +1,217 @@
+@startuml Enhanced Lost & Found AI System - Database Schema
+
+!define table(name) entity name
+
+table(users) {
+    * id : uuid <<PK>>
+    --
+    * email : varchar(255) <<UK>>
+    * password_hash : varchar(255)
+    * first_name : varchar(100)
+    * last_name : varchar(100)
+    * phone : varchar(20)
+    * created_at : timestamp
+    * updated_at : timestamp
+    * is_active : boolean
+    * email_verified : boolean
+    * feedback_count : integer
+    * reputation_score : float
+}
+
+table(items) {
+    * id : uuid <<PK>>
+    --
+    * title : varchar(200)
+    * description : text
+    * category : varchar(50)
+    * subcategory : varchar(50)
+    * status : enum('lost', 'found', 'matched', 'closed')
+    * location_lat : decimal(10,8)
+    * location_lng : decimal(11,8)
+    * location_address : varchar(500)
+    * date_lost_found : timestamp
+    * date_reported : timestamp
+    * user_id : uuid <<FK>>
+    * ai_predicted_class : varchar(100)
+    * ai_confidence : float
+    * embedding_id : varchar(100) <<UK>>
+    * is_verified : boolean
+    * match_count : integer
+    * view_count : integer
+    * created_at : timestamp
+    * updated_at : timestamp
+}
+
+table(item_images) {
+    * id : uuid <<PK>>
+    --
+    * item_id : uuid <<FK>>
+    * image_url : varchar(500)
+    * image_path : varchar(500)
+    * is_primary : boolean
+    * file_size : bigint
+    * width : integer
+    * height : integer
+    * format : varchar(10)
+    * upload_timestamp : timestamp
+    * quality_score : float
+    * processed : boolean
+}
+
+table(user_feedback) {
+    * id : uuid <<PK>>
+    --
+    * item_id : uuid <<FK>>
+    * user_id : uuid <<FK>>
+    * feedback_type : enum('classification_correction', 'match_confirmation', 'quality_rating', 'false_positive')
+    * original_classification : varchar(100)
+    * corrected_classification : varchar(100)
+    * confidence_score : float
+    * is_verified : boolean
+    * verification_method : varchar(50)
+    * feedback_text : text
+    * created_at : timestamp
+    * processed_at : timestamp
+    * processing_status : enum('pending', 'processed', 'rejected')
+    * metadata : jsonb
+}
+
+table(training_samples) {
+    * id : uuid <<PK>>
+    --
+    * item_id : uuid <<FK>>
+    * feedback_id : uuid <<FK>>
+    * image_path : varchar(500)
+    * label : varchar(100)
+    * confidence : float
+    * data_source : enum('user_upload', 'user_correction', 'synthetic', 'external')
+    * quality_score : float
+    * is_verified : boolean
+    * verification_count : integer
+    * duplicate_hash : varchar(64)
+    * created_at : timestamp
+    * last_used_training : timestamp
+    * training_count : integer
+    * metadata : jsonb
+}
+
+table(model_versions) {
+    * id : uuid <<PK>>
+    --
+    * version : varchar(20) <<UK>>
+    * model_path : varchar(500)
+    * base_model : varchar(100)
+    * training_dataset_size : integer
+    * accuracy_score : float
+    * precision_score : float
+    * recall_score : float
+    * f1_score : float
+    * training_duration : interval
+    * created_at : timestamp
+    * deployed_at : timestamp
+    * is_active : boolean
+    * performance_metrics : jsonb
+    * training_config : jsonb
+}
+
+table(retraining_jobs) {
+    * id : uuid <<PK>>
+    --
+    * job_name : varchar(100)
+    * trigger_reason : varchar(100)
+    * dataset_size : integer
+    * start_time : timestamp
+    * end_time : timestamp
+    * status : enum('queued', 'running', 'completed', 'failed', 'cancelled')
+    * progress_percentage : float
+    * estimated_completion : timestamp
+    * model_version_id : uuid <<FK>>
+    * error_message : text
+    * resource_usage : jsonb
+    * performance_improvement : float
+    * created_by : varchar(50)
+}
+
+table(vector_embeddings) {
+    * id : varchar(100) <<PK>>
+    --
+    * item_id : uuid <<FK>>
+    * embedding_vector : vector(512)
+    * model_version : varchar(20)
+    * extraction_timestamp : timestamp
+    * normalization_method : varchar(50)
+    * dimension : integer
+    * index_position : bigint
+    * last_updated : timestamp
+}
+
+table(similarity_matches) {
+    * id : uuid <<PK>>
+    --
+    * query_item_id : uuid <<FK>>
+    * matched_item_id : uuid <<FK>>
+    * similarity_score : float
+    * distance_metric : varchar(20)
+    * match_rank : integer
+    * search_timestamp : timestamp
+    * user_id : uuid <<FK>>
+    * user_confirmed : boolean
+    * confirmation_timestamp : timestamp
+    * search_context : jsonb
+}
+
+table(feedback_validation) {
+    * id : uuid <<PK>>
+    --
+    * feedback_id : uuid <<FK>>
+    * validator_type : enum('automated', 'consensus', 'expert')
+    * validation_score : float
+    * is_valid : boolean
+    * validation_reason : text
+    * validated_at : timestamp
+    * validator_metadata : jsonb
+}
+
+table(system_metrics) {
+    * id : uuid <<PK>>
+    --
+    * metric_name : varchar(100)
+    * metric_value : float
+    * metric_type : varchar(50)
+    * category : varchar(50)
+    * timestamp : timestamp
+    * model_version : varchar(20)
+    * additional_data : jsonb
+}
+
+table(auto_learning_config) {
+    * id : uuid <<PK>>
+    --
+    * config_key : varchar(100) <<UK>>
+    * config_value : text
+    * data_type : varchar(20)
+    * description : text
+    * is_active : boolean
+    * created_at : timestamp
+    * updated_at : timestamp
+    * updated_by : varchar(100)
+}
+
+' Relationships
+users ||--o{ items : "users.id -> items.user_id"
+users ||--o{ user_feedback : "users.id -> user_feedback.user_id"
+users ||--o{ similarity_matches : "users.id -> similarity_matches.user_id"
+
+items ||--o{ item_images : "items.id -> item_images.item_id"
+items ||--o{ user_feedback : "items.id -> user_feedback.item_id"
+items ||--o{ training_samples : "items.id -> training_samples.item_id"
+items ||--|| vector_embeddings : "items.id -> vector_embeddings.item_id"
+items ||--o{ similarity_matches : "items.id -> similarity_matches.query_item_id"
+items ||--o{ similarity_matches : "items.id -> similarity_matches.matched_item_id"
+
+user_feedback ||--o{ training_samples : "user_feedback.id -> training_samples.feedback_id"
+user_feedback ||--|| feedback_validation : "user_feedback.id -> feedback_validation.feedback_id"
+
+model_versions ||--o{ retraining_jobs : "model_versions.id -> retraining_jobs.model_version_id"
+
+@enduml

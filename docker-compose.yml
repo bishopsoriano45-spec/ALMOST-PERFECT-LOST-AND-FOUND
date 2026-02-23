@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # Database
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: lost_found
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/db/schema-postgres.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./server/migrations:/docker-entrypoint-initdb.d/migrations
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # AI Service
+  ai_service:
+    build: ./ai_service
+    env_file:
+      - ./ai_service/.env
+    ports:
+      - "5000:5000"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Backend API
+  backend:
+    build: ./server
+    environment:
+      - PORT=3000
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=lost_found
+      - AI_SERVICE_URL=http://ai_service:5000
+      - BASE_URL=${BASE_URL:-http://localhost:3000}
+      - APP_URL=${APP_URL:-http://localhost:5173}
+      - ADMIN_USER=admin
+      - ADMIN_PASS=admin123
+    depends_on:
+      - db
+      - ai_service
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server/uploads:/app/uploads
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build: .
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:3000}
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

@@ -1,0 +1,17 @@
+{
+    "name": "lost-and-found",
+    "version": "2.0.0",
+    "scripts": {
+        "build": "vite build",
+        "preview": "vite preview --port 4173"
+    },
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "devCommand": "npm run dev",
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}

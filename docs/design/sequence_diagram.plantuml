@@ -1,0 +1,163 @@
+@startuml
+actor User
+participant "Web UI" as UI
+participant "API Gateway" as Gateway
+participant "Item Service" as ItemSvc
+participant "AI Service" as AISvc
+participant "Notification Service" as NotifySvc
+participant "Vector DB" as VectorDB
+participant "Background Jobs" as Jobs
+participant "YOLO Model" as YOLO
+
+== Item Upload and AI Classification ==
+User -> UI: Upload lost item image
+UI -> Gateway: POST /api/items/upload
+    note right
+        Input: {
+            "image": "base64_data",
+            "title": "string",
+            "description": "string",
+            "location": {
+                "lat": float,
+                "lng": float,
+                "name": "string"
+            }
+        }
+    end note
+
+Gateway -> ItemSvc: Create item record
+Gateway -> AISvc: Classify image
+AISvc -> YOLO: Process image
+    note right
+        Input: {
+            "image_data": bytes,
+            "model_version": "yolov8m-cls-v1.0"
+        }
+    end note
+
+YOLO --> AISvc: Classification result
+    note right
+        Output: {
+            "category": "electronics",
+            "confidence": 0.89,
+            "predictions": [
+                {"label": "phone", "confidence": 0.89},
+                {"label": "tablet", "confidence": 0.65}
+            ]
+        }
+    end note
+
+AISvc -> AISvc: Extract embedding
+AISvc -> VectorDB: Store embedding
+VectorDB --> AISvc: Embedding stored
+
+AISvc -> VectorDB: Search similar items
+    note right
+        Input: {
+            "vector": [0.1, 0.2, ...],
+            "limit": 10,
+            "threshold": 0.75
+        }
+    end note
+
+VectorDB --> AISvc: Similar items found
+    note right
+        Output: {
+            "matches": [
+                {
+                    "item_id": "uuid",
+                    "similarity_score": 0.87,
+                    "metadata": {...}
+                }
+            ]
+        }
+    end note
+
+AISvc --> Gateway: Classification + similarities
+Gateway --> UI: Item created with AI results
+UI --> User: Show classification and matches
+
+== Real-time Notification Trigger ==
+AISvc -> Jobs: Queue similarity check job
+Jobs -> NotifySvc: Check for potential matches
+NotifySvc -> VectorDB: Find matching lost items
+VectorDB --> NotifySvc: Matching items list
+
+NotifySvc -> NotifySvc: Calculate match confidence
+NotifySvc -> Gateway: Send WebSocket notification
+    note right
+        Output: {
+            "type": "potential_match",
+            "match_id": "uuid",
+            "similarity_score": 0.87,
+            "item_details": {...},
+            "contact_info": {...}
+        }
+    end note
+
+Gateway -> UI: Real-time notification
+UI -> User: Show match alert
+
+== User Feedback and Learning ==
+User -> UI: Provide feedback on classification
+UI -> Gateway: POST /api/feedback
+    note right
+        Input: {
+            "item_id": "uuid",
+            "feedback_type": "classification",
+            "is_correct": false,
+            "corrected_label": "laptop",
+            "confidence": 4
+        }
+    end note
+
+Gateway -> AISvc: Store feedback
+AISvc -> Jobs: Queue learning data update
+Jobs -> AISvc: Add to training dataset
+
+AISvc -> AISvc: Check retraining trigger
+alt Retraining threshold reached
+    AISvc -> Jobs: Queue model retraining
+    Jobs -> YOLO: Retrain with new data
+    YOLO --> Jobs: Updated model
+    Jobs -> VectorDB: Regenerate all embeddings
+    Jobs -> NotifySvc: Notify model update
+end
+
+== Background Auto-Learning Process ==
+Jobs -> Jobs: Scheduled retraining check
+Jobs -> AISvc: Get training data stats
+    note right
+        Output: {
+            "new_samples": 150,
+            "threshold": 100,
+            "last_training": "2024-01-15T10:00:00Z",
+            "should_retrain": true
+        }
+    end note
+
+alt Should retrain
+    Jobs -> YOLO: Start incremental training
+    note right
+        Input: {
+            "base_model": "yolov8m-cls-v1.0",
+            "new_data_path": "/training/batch_2024_01",
+            "learning_rate": 0.001,
+            "epochs": 10
+        }
+    end note
+
+    YOLO --> Jobs: Training completed
+    note right
+        Output: {
+            "model_version": "yolov8m-cls-v1.1",
+            "accuracy": 0.94,
+            "training_time": "45min",
+            "samples_processed": 150
+        }
+    end note
+
+    Jobs -> VectorDB: Update all embeddings
+    Jobs -> NotifySvc: Broadcast model update
+end
+@enduml
