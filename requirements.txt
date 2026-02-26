@@ -2,7 +2,7 @@ fastapi
 uvicorn
 ultralytics
 numpy
-opencv-python
+opencv-python-headless
 faiss-cpu
 python-multipart
 requests
